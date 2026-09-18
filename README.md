@@ -59,3 +59,19 @@ Publishable key 本来就是供网页等公开客户端使用的低权限密钥�
 - [Supabase Data REST API](https://supabase.com/docs/guides/api)
 - [Supabase API Keys](https://supabase.com/docs/guides/getting-started/api-keys)
 - [Supabase API 安全与 RLS](https://supabase.com/docs/guides/api/securing-your-api)
+
+
+## 大题库版更新说明
+- G2：500 个内置题目位（200 个经典/读书语录 + 300 个古诗文名句）
+- G3：200 组作者—作品
+- G4：300 道三词猜书
+- G5：20 个关键词，每个关键词 70 个识别/参考条目
+- 保留原 Supabase 统计配置与 GitHub Pages 部署方式。
+
+### 上传 GitHub
+1. 解压本 ZIP。
+2. 打开原 GitHub 仓库，点击 Add file → Upload files。
+3. 上传解压后的 4 个文件，覆盖同名文件。
+4. 点击 Commit changes。
+5. 打开 Actions，等待 pages build and deployment 变成绿色对勾。
+6. 刷新原 GitHub Pages 网站（必要时 Ctrl+F5）。
