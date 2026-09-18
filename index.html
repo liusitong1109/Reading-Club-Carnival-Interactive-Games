@@ -307,7 +307,7 @@
     </section>
 
     <section class="panel" id="panel-g5">
-      <div class="section-head"><div><h2>G5 轻量飞花令</h2><p>抽取关键词，45 秒内说出 2 句来自不同作品的诗句。</p></div></div>
+      <div class="section-head"><div><h2>G5 轻量飞花令</h2><p>抽取关键词，45 秒内写出 2 句含有该关键词的诗句。</p></div></div>
       <div class="game-shell">
         <div class="card game-board">
           <div id="g5Board" class="empty">点击“抽词开始”获取关键词。</div>
@@ -316,7 +316,7 @@
         </div>
         <aside class="game-side">
           <div class="timer" id="g5Timer"><span>剩余时间</span><strong>45</strong></div>
-          <div class="card game-rules" style="margin-top:12px"><h3>游戏介绍</h3><p>抽取一个关键词，45 秒内写出 2 句来自不同作品且含有该字的诗句。系统按内置素材库核验，答错会显示参考答案。</p><button class="btn btn-soft" id="g5Hint">查看 3 句提示</button><div class="hint-box" id="g5Hints"></div></div>
+          <div class="card game-rules" style="margin-top:12px"><h3>游戏介绍</h3><p>抽取一个关键词，45 秒内写出 2 句含有该字的诗句。系统只检查是否含关键词，不与内置素材库比对；素材库仅用于提示和参考。</p><button class="btn btn-soft" id="g5Hint">查看 3 句提示</button><div class="hint-box" id="g5Hints"></div></div>
         </aside>
       </div>
     </section>
@@ -462,7 +462,7 @@
       "夜":[["随风潜入夜，润物细无声。","杜甫《春夜喜雨》"],["姑苏城外寒山寺，夜半钟声到客船。","张继《枫桥夜泊》"],["海日生残夜，江春入旧年。","王湾《次北固山下》"],["天阶夜色凉如水，卧看牵牛织女星。","杜牧《秋夕》"],["昨夜西风凋碧树，独上高楼，望尽天涯路。","晏殊《蝶恋花·槛菊愁烟兰泣露》"],["君问归期未有期，巴山夜雨涨秋池。","李商隐《夜雨寄北》"],["夜阑卧听风吹雨，铁马冰河入梦来。","陆游《十一月四日风雨大作·其二》"],["明月别枝惊鹊，清风半夜鸣蝉。","辛弃疾《西江月·夜行黄沙道中》"]]
     };
 
-    /* ===== 大题库扩展层（v3：外置题库 + 开放式飞花令验证） ===== */
+    /* ===== 大题库扩展层（v7：外置题库 + 飞花令仅检查关键词） ===== */
     (function(){
       var bank=window.READING_CLUB_BANK||{};
       if(Array.isArray(bank.g1Titles)&&bank.g1Titles.length)G1_TITLES=bank.g1Titles;
@@ -682,18 +682,19 @@
     function startG5(){
       resetParticipant();var word=pick(Object.keys(G5_LINES),1)[0];rounds.g5={word:word,hint:false};
       el("g5Board").className="";el("g5Board").innerHTML="<div style='display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:18px'><div class='keyword'>"+word+
-        "</div><div><h3 style='margin:0'>关键词：<span style='color:var(--gold)'>"+word+"</span></h3><p class='muted'>请将两句含关键词的诗分别写在两行；系统会忽略常见标点差异。</p></div></div>"+
+        "</div><div><h3 style='margin:0'>关键词：<span style='color:var(--gold)'>"+word+"</span></h3><p class='muted'>请将两句含关键词的诗分别写在两行；判定只检查关键词，不与素材库比对。</p></div></div>"+
         "<div class='field'><label for='g5Input'>两句诗</label><textarea id='g5Input' placeholder='第一句……&#10;第二句……'></textarea></div>";
       el("g5Submit").disabled=false;el("g5Result").className="result-box";el("g5Hints").className="hint-box";startTimer("g5",45)
     }
-    function normLine(s){return String(s).replace(/[，。！？、；：,.!?;:\s]/g,"")}
     function g5References(word){return pick(G5_LINES[word],2).map(function(x){return x[0]+"（"+x[1]+"）"}).join("；")}
     function submitG5(){
       if(!rounds.g5)return;var word=rounds.g5.word,raw=el("g5Input").value;
       var lines=raw.split(/\n|；|;/).map(function(s){return s.trim()}).filter(Boolean).slice(0,2);
-      var valid=lines.length===2&&lines[0].indexOf(word)>=0&&lines[1].indexOf(word)>=0&&normLine(lines[0])!==normLine(lines[1]);
-      if(!valid){finishGame("g5",0,2,false,"两句均需实际含有关键词“"+word+"”，且不能重复。参考答案："+g5References(word));return}
-      finishGame("g5",2,2,!rounds.g5.hint&&!rounds.g5.timedOut,"已按开放式飞花令规则通过：两句均含关键词且不重复。")
+      if(lines.length<2){finishGame("g5",0,2,false,"请填写两句诗，并分别写在两行。参考："+g5References(word));return}
+      var hit1=lines[0].indexOf(word)>=0,hit2=lines[1].indexOf(word)>=0;
+      var score=(hit1?1:0)+(hit2?1:0);
+      if(score<2){var missing=[];if(!hit1)missing.push("第一句");if(!hit2)missing.push("第二句");finishGame("g5",score,2,false,missing.join("、")+"未包含关键词“"+word+"”。系统不检查题库收录情况，只检查关键词。参考："+g5References(word));return}
+      finishGame("g5",2,2,!rounds.g5.hint&&!rounds.g5.timedOut,"判定通过：两句都包含关键词“"+word+"”。内置题库仅用于提示，不参与判罚。")
     }
 
     function bindGames(){
